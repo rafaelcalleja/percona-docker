@@ -1,14 +1,18 @@
 #!/bin/bash
 set -e
-
+set -x
 # if command starts with an option, prepend mysqld
 if [ "${1:0:1}" = '-' ]; then
 	CMDARG="$@"
 fi
 
 #get server_id from ip address
+echo $LC_ALL
 ipaddr=$(hostname -i | awk ' { print $1 } ')
-server_id=$(echo $ipaddr | tr . '\n' | awk '{s = s*256 + $1} END{print s}')
+server_id=$(printf "%.0f\n" $(echo $ipaddr | tr . '\n' | awk '{s = s*256 + $1} END{print s}'))
+
+echo $ipaddr
+echo $server_id
 
 if [ -z "$MASTER_HOST" ]; then
 # if master is not set - perform regular initialization
@@ -139,7 +143,7 @@ else
   innobackupex --apply-log --use-memory=2G ./
   slavepass="$(pwmake 128)"
   mysql -h${MASTER_HOST} -uroot -p${MYSQL_ROOT_PASSWORD} -e "GRANT REPLICATION SLAVE ON *.*  TO 'repl'@'$ipaddr' IDENTIFIED BY '$slavepass';"
-  chown -R mysql:mysql "$DATADIR"
+  chown -R mysql "$DATADIR"
 
 # start slave 
   echo "Starting slave..."

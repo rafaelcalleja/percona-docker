@@ -11,11 +11,14 @@ TIMEOUT=10
 ipaddr=$(hostname -i | awk ' { print $1 } ')
 hostname=$(hostname)
 
+echo $ipaddr
+echo $hosname
+
 while true
 do
   # listen for slave request. expected incoming: IP address of the slave
   nc -l -p 4566 0<&0 1>/tmp/slaveip
   echo "Received request from $(cat /tmp/slaveip)"
-  innobackupex --stream=xbstream --user=root --password=Theistareyk --socket=/var/lib/mysql/mysql.sock --slave-info /tmp | nc -w 60 $(cat /tmp/slaveip) 4565
+  innobackupex --stream=xbstream --user=root --password=Theistareyk --socket=/var/run/mysqld/mysqld.sock --slave-info /tmp | nc -w 60 $(cat /tmp/slaveip) 4565
 
 done

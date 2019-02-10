@@ -3,7 +3,7 @@ MAINTAINER Percona Development <info@percona.com>
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
 		apt-transport-https ca-certificates \
-		pwgen netcat wget \
+		pwgen netcat wget locales libpwquality-tools cracklib-runtime \
 	&& rm -rf /var/lib/apt/lists/*
 
 RUN wget https://repo.percona.com/apt/percona-release_0.1-4.jessie_all.deb \
@@ -14,7 +14,6 @@ RUN useradd -u 1001 -r -g 0 -s /sbin/nologin \
             -c "Default Application User" mysql
 
 ENV PERCONA_MAJOR 5.7
-ENV PERCONA_VERSION 5.7.17-11-1.jessie
 ENV DEBIAN_FRONTEND=noninteractive
 
 # the "/var/lib/mysql" stuff here is because the mysql-server postinst doesn't have an explicit way to disable the mysql_install_db codepath besides having a database already "configured" (ie, stuff in /var/lib/mysql/mysql)
@@ -25,7 +24,7 @@ RUN { \
 	} | debconf-set-selections \
 	&& apt-get update \
 	&& apt-get install -y --force-yes \
-		percona-server-server-$PERCONA_MAJOR=$PERCONA_VERSION \
+		percona-server-server-$PERCONA_MAJOR \
 	&& apt-get -q install -y --force-yes percona-xtrabackup-24 \
 	&& rm -rf /var/lib/apt/lists/* \
 # purge and re-create /var/lib/mysql with appropriate ownership
@@ -45,6 +44,13 @@ COPY master_nc /usr/bin/master_nc
 RUN chmod a+x /usr/bin/master_nc
 
 EXPOSE 3306 4565 4566
+
+# Set the locale
+RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
+    locale-gen
+ENV LANG en_US.UTF-8  
+ENV LANGUAGE en_US:en  
+ENV LC_ALL en_US.UTF-8  
 
 USER 1001
 
